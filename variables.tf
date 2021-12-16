@@ -35,14 +35,13 @@ variable "bucket_basename" {
 }
 
 variable "route53_hosted_zone" {
-  description = "Route53 DNS hosted zone name. Example: 'foobar.com.' (note the '.' at the end). This hosted zone must be provisioned in advanced!"
+  description = "Route53 DNS hosted zone name. Example: 'example.com.' (note the '.' at the end). This hosted zone must be provisioned in advanced!"
   type        = string
 }
 
 variable "route53_dns_records" {
-  description = "A list containing DNS names (A) to route via alias to the CloudFront Distribution."
+  description = "A list containing DNS names (A) to route via alias to the CloudFront Distribution. Example: 'www.example.com'"
   type        = list(string)
-  default     = ["www"]
 
   validation {
     condition = alltrue([
@@ -53,7 +52,7 @@ variable "route53_dns_records" {
 }
 
 variable "acm_certificate_domain" {
-  description = "The FQDN for the certificate to create for the environment, example: '*.foobar.com'"
+  description = "The FQDN for the certificate to create for the environment, example: '*.example.com'"
   type        = string
 
   validation {
@@ -65,7 +64,7 @@ variable "acm_certificate_domain" {
 variable "cloudfront_distro_alternate_dns_aliases" {
   description = "A list containing extra CNAMEs (alternate domain names), if any, to associate with the CloudFront distribution."
   type        = list(string)
-  default     = formatlist("%s.${trimsuffix(var.route53_hosted_zone, ',')}", var.route53_dns_records)
+  default     = ["www."]
 
   validation {
     condition = alltrue([

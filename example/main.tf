@@ -5,12 +5,15 @@ provider "aws" {
 module "static_site_infra" {
   source = "../"
 
-  organization        = "foobar"
-  environment         = "test"
-  service_name        = "my-webapp"
-  route53_hosted_zone = "foobar.xyz."
-  route53_dns_records = [
-    "*"
+  region                 = "us-east-1"
+  organization           = "foobar"
+  environment            = "test"
+  service_name           = "my-webapp"
+  acm_certificate_domain = "*.foobar.xyz"
+  route53_hosted_zone    = "foobar.xyz."
+  route53_dns_records    = [
+    "www",
+    "app"
   ]
   cloudfront_distro_alternate_dns_aliases = [
     "www.foobar.xyz",
