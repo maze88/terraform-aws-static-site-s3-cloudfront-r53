@@ -100,7 +100,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   default_cache_behavior {
-    target_origin_id       = "${var.service_name}-static_content"
+    target_origin_id       = "${var.service_name}-static-content"
     compress               = true
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
