@@ -26,7 +26,7 @@ variable "service_name" {
 variable "bucket_basename" {
   description = "The bucket basename is used along with organization, environment and service names when naming the S3 bucket."
   type        = string
-  default     = "fe-static-content"
+  default     = "static-content"
 
   validation {
     condition = var.bucket_basename == lower(var.bucket_basename)
@@ -35,13 +35,14 @@ variable "bucket_basename" {
 }
 
 variable "route53_hosted_zone" {
-  description = "Route53 DNS hosted zone name. Example: 'foobar.com.' (note the '.' at the end)."
+  description = "Route53 DNS hosted zone name. Example: 'foobar.com.' (note the '.' at the end). This hosted zone must be provisioned in advanced!"
   type        = string
 }
 
 variable "route53_dns_records" {
   description = "A list containing DNS names (A) to route via alias to the CloudFront Distribution."
   type        = list(string)
+  default     = ["www"]
 
   validation {
     condition = alltrue([
@@ -51,14 +52,20 @@ variable "route53_dns_records" {
   }
 }
 
-variable "acm_certificate_arn" {
-  description = "The ARN of an existing certificate to use for the frontend services."
+variable "acm_certificate_domain" {
+  description = "The FQDN for the certificate to create for the environment, example: '*.foobar.com'"
   type        = string
+
+  validation {
+    condition = var.acm_certificate_domain == lower(var.acm_certificate_domain)
+    error_message = "The FQDN must be lowercase."
+  }
 }
 
 variable "cloudfront_distro_alternate_dns_aliases" {
   description = "A list containing extra CNAMEs (alternate domain names), if any, to associate with the CloudFront distribution."
   type        = list(string)
+  default     = formatlist("%s.${trimsuffix(var.route53_hosted_zone, ',')}", var.route53_dns_records)
 
   validation {
     condition = alltrue([

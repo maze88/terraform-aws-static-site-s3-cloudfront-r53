@@ -1,9 +1,9 @@
-output "s3_bucket_id" {
-  value = aws_s3_bucket.static_content.id
+output "service_name" {
+  value = var.service_name
 }
 
-output "cloudfront_origin_access_identity_id" {
-  value = aws_cloudfront_origin_access_identity.static_content_accesser.id
+output "s3_bucket_id" {
+  value = aws_s3_bucket.static_content.id
 }
 
 output "cloudfront_distribution_id" {

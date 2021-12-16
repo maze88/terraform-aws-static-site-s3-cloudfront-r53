@@ -1,3 +1,7 @@
+provider "aws" {
+  region  = var.region
+}
+
 resource "aws_s3_bucket" "static_content" {
   bucket        = "${var.organization}-${var.environment}-${var.bucket_basename}-${var.service_name}"
   force_destroy = true
@@ -45,11 +49,23 @@ resource "aws_s3_bucket_policy" "static_content" {
   })
 }
 
+resource "aws_acm_certificate" "cert" {
+  domain_name       = var.acm_certificate_domain
+  validation_method = "DNS"
+
+  tags = {
+    Name        = "${var.organization}-${var.environment}-${var.bucket_basename}-${var.service_name}"
+    Environment = var.environment
+    Temp        = "false"
+    Terraform   = "true"
+  }
+}
+
 resource "aws_cloudfront_distribution" "cdn" {
   enabled                  = true
   wait_for_deployment      = false
   aliases                  = var.cloudfront_distro_alternate_dns_aliases
-  comment                  = "Distribution of frontend static content for ${var.environment}'s ${var.service_name}."
+  comment                  = "Static content for ${var.environment}'s ${var.service_name}."
   is_ipv6_enabled          = true
   default_root_object      = var.cloudfront_default_root_object
 
@@ -60,13 +76,13 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.acm_certificate_arn
+    acm_certificate_arn      = aws_acm_certificate.cert.arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = var.cloudfront_minimum_protocol_version
   }
 
   origin {
-    origin_id   = "frontend_static_content"
+    origin_id   = "${var.service_name}-static_content"
     domain_name = aws_s3_bucket.static_content.bucket_domain_name
 
     s3_origin_config {
@@ -84,12 +100,26 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   default_cache_behavior {
-    target_origin_id       = "frontend_static_content"
+    target_origin_id       = "${var.service_name}-static_content"
     compress               = true
-    allowed_methods        = ["GET", "HEAD"]
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     viewer_protocol_policy = "allow-all"
     cache_policy_id        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+  }
+
+  custom_error_response {
+    error_caching_min_ttl = 0
+    error_code            = 403
+    response_page_path    = "/index.html"
+    response_code         = 200
+  }
+
+  custom_error_response {
+    error_caching_min_ttl = 0
+    error_code            = 404
+    response_page_path    = "/index.html"
+    response_code         = 200
   }
 
   tags = {
